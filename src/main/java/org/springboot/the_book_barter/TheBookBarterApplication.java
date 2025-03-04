@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class InkSwapApplication {
+public class TheBookBarterApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(InkSwapApplication.class, args);
+        SpringApplication.run(TheBookBarterApplication.class, args);
     }
 
 }
