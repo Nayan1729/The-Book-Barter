@@ -15,7 +15,7 @@ export default function LoginFormComponent() {
     initialValues : {
       email : "",
       password : "",
-      showPassword : null,
+      showPassword : false,
     },
     validationSchema : LoginFormValidationSchema,
     onSubmit : (values) => {
