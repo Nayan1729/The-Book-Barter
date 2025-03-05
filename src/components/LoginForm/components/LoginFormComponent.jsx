@@ -8,6 +8,7 @@ import {Button , Label , Input} from "../../index"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../Card";
 import LoginFormValidationSchema from "../schemas/LoginFormValidationSchema";
 import { toast } from "react-toastify";
+import { loginApi } from "../../../apiEndPoints";
 
 export default function LoginFormComponent() {
   const navigate = useNavigate()
@@ -18,8 +19,18 @@ export default function LoginFormComponent() {
       showPassword : false,
     },
     validationSchema : LoginFormValidationSchema,
-    onSubmit : (values) => {
+    onSubmit : async(values) => {
       console.log(values)
+      setLoading(true)
+      const res = await loginApi(values);
+      console.log(res.data);
+      
+      if(res.statusCode == 200){
+        setLoading(false);
+        navigate("/")
+      }else{
+        toast.error(res.message)
+      }
     }
   })
  

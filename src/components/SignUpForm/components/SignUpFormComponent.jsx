@@ -3,14 +3,16 @@ import { useState } from "react"
 import {Button , Input , Label, Loader} from "../../index"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../Card"
 import { Eye, EyeOff, BookOpen, Check, X } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { useFormik } from "formik"
 import SignUpFormSchema from "../schemas/SignUpFormSchema"
+import { signUpApi } from "../../../apiEndPoints"
+import { toast } from "react-toastify"
 
 export default function SignupPage() {
-
-
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
   const formik = useFormik({
     initialValues: {
         name: "",
@@ -21,13 +23,21 @@ export default function SignupPage() {
         avatar: "",
     },
     validationSchema : SignUpFormSchema,
-    onSubmit :(values)=>{
+    onSubmit : async(values)=>{
         console.log(values);
+        setLoading(true)
+        const res = await signUpApi(values)
+        if(res.statusCode == 201){
+          toast.success(res.message)
+          navigate("/")
+        }else{
+          toast.error(res.message)
+        }
+        setLoading(false)
     }
     })
 
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
 
   const handleAvatarChange = (e)=>{
     const file = e.currentTarget.files[0];
