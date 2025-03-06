@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -22,7 +23,7 @@ public class Books {
     private User owner;
 
     private String bookcondition; // Old , new , etc
-    private LocalDate listedDate;
+    private LocalDateTime listedDateTime;
     private String status; // Exchanged , Listed for trade etc
 
     // As we can't make the List of basic datatypes

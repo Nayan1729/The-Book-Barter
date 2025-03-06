@@ -16,9 +16,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +36,7 @@ public class BooksService {
         User currentUser = this.userService.getLoggedInUser();
         Books book = this.modelMapper.map(booksRegisterDTO, Books.class);
         book.setOwner(currentUser);
-        book.setListedDate(LocalDate.now());
+        book.setListedDateTime(LocalDateTime.now());
         List<String> imageUrls = new ArrayList<>();
 //         Multipart images save to aws .
             booksRegisterDTO.getImages().forEach(image -> {
@@ -64,11 +66,23 @@ public class BooksService {
         return booksListedDTO;
     }
 
-    public BookPageResponseDTO getAllBooks(int pageNo , int pageSize , String sortBy , String sortDir) throws ApiException {
+    public BookPageResponseDTO getAllBooks(Double latitude,Double longitude,Double radius,String location,String filterType, String filterQuery,int pageNo , int pageSize , String sortBy , String sortDir) throws ApiException {
         Sort sort = null;
+
         sort = sortDir.startsWith("des") ?  Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable =  PageRequest.of(pageNo,pageSize,sort);
-        Page<Books> pageBooks = this.booksRepository.findAll(pageable);
+        Page<Books> pageBooks = null;
+        if (latitude == null && longitude == null) {
+            if( location!=null && !location.trim().isEmpty()) {
+                //location is not null
+                List<Double> coordinates = this.geoCodeService.getCoordinatesFromLocation(location);
+                System.out.println(coordinates);
+                latitude = coordinates.get(0);
+                longitude = coordinates.get(1);
+            }
+        }
+
+        pageBooks = this.booksRepository.findBooksNearbyAndFiltered(latitude,longitude,radius,filterType,filterQuery,pageable);
         List<Books> bookList = pageBooks.getContent();
         List<BooksListedDTO> booksListedDTOS = bookList.stream().map(book->{
             BooksListedDTO booksListedDTO = this.modelMapper.map(book, BooksListedDTO.class);
@@ -91,5 +105,13 @@ public class BooksService {
         bookPageResponseDTO.setLastPage(pageBooks.isLast());
 
         return bookPageResponseDTO;
+    }
+
+    public Books getBookById(int bookListedId) throws ApiException {
+        Optional<Books> bookExists = this.booksRepository.findBooksById(bookListedId);
+        if(!bookExists.isPresent() || bookExists == null ){
+            throw new ApiException("No such book exists",404);
+        }
+        return bookExists.get();
     }
 }

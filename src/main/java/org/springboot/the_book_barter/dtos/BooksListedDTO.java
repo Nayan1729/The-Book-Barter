@@ -5,6 +5,7 @@ import lombok.Data;
 import org.springboot.the_book_barter.entities.User;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -20,7 +21,7 @@ public class BooksListedDTO {
     private String phoneNumber;
 
     private String bookcondition;
-    private LocalDate listedDate;
+    private LocalDateTime listedDateTime;
     private String status;
 
     private String genre;

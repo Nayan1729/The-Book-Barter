@@ -21,6 +21,7 @@ public class CustomAutenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        System.out.println(authException.getMessage());
         ApiResponse apiResponse = new ApiResponse(401, null, "Authentication Failed");
         // Convert ApiResponse to JSON and write it to response
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));

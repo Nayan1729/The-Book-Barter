@@ -35,7 +35,8 @@ public class GeoCodeService {
     }
 
     public List<Double> getCoordinatesFromLocation(String location){
-        JOpenCageGeocoder jOpenCageGeocoder = new JOpenCageGeocoder("2643229878224ef1a1576bc95d79fdda");
+        System.out.println(location);
+        JOpenCageGeocoder jOpenCageGeocoder = new JOpenCageGeocoder(apiKey);
         JOpenCageForwardRequest request = new JOpenCageForwardRequest(location);
 //        request.setRestrictToCountryCode("za"); // restrict results to a specific country
 //        request.setBounds(18.367, -34.109, 18.770, -33.704); // restrict results to a geographic bounding box (southWestLng, southWestLat, northEastLng, northEastLat)

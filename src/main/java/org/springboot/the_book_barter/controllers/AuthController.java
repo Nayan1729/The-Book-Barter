@@ -39,8 +39,8 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse> register(@RequestBody RegisterRequestDTO registerRequestDTO){
+    @PostMapping(value = "/register",consumes ="multipart/form-data")
+    public ResponseEntity<ApiResponse> register(@ModelAttribute RegisterRequestDTO registerRequestDTO){
         try{
            Map<String ,Object> response = this.authService.register(registerRequestDTO);
             HttpHeaders headers = new HttpHeaders();

@@ -10,8 +10,6 @@ import org.springboot.the_book_barter.utilities.ApiResponse;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.awt.print.Book;
 
 @RestController
 @RequestMapping("/api/v1/books")
@@ -31,13 +29,20 @@ public class BooksController {
 
     @GetMapping
     public ResponseEntity<ApiResponse> getBooks(
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
+            @RequestParam(required = false) String filterType,
+            @RequestParam(required = false) String filterQuery,
+            @RequestParam(required = false) String location,
+            @RequestParam(defaultValue = "10") double radius,
             @RequestParam( defaultValue = "0" , required = false) Integer pageNo ,
-            @RequestParam( defaultValue = "5" , required = false) Integer pageSize,
-            @RequestParam( defaultValue = "listedDate" , required = false) String sortBy,
+            @RequestParam( defaultValue = "2" , required = false) Integer pageSize,
+            @RequestParam( defaultValue = "listedDateTime" , required = false) String sortBy,
             @RequestParam( defaultValue = "desc" , required = false) String sortDir
     ) throws ApiException {
         try{
-            BookPageResponseDTO books = this.booksService.getAllBooks(pageNo,pageSize , sortBy, sortDir);
+            System.out.println("Location"+location);
+            BookPageResponseDTO books = this.booksService.getAllBooks(latitude,longitude,radius,location,filterType,filterQuery,pageNo,pageSize , sortBy, sortDir);
             return ResponseEntity.status(200).body(new ApiResponse(200,books,"Books fetched Successfully"));
         }catch (ApiException e) {
             return ResponseEntity.status(e.getStatusCode()).body(new ApiResponse(e.getStatusCode(), null, e.getMessage()));

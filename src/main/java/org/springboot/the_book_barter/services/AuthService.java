@@ -32,6 +32,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
     private final ModelMapper modelMapper ;
+    private final AwsService awsService;
 
     public String login(LoginRequestDTO loginRequestDTO) throws ApiException {
         try {
@@ -60,6 +61,7 @@ public class AuthService {
         User user = this.modelMapper.map(registerRequestDTO, User.class);
         user.setPassword(this.encoder.encode(registerRequestDTO.getPassword()));
         user.setRole(Role.USER);
+        user.setImageUrl(awsService.saveImageToS3(registerRequestDTO.getAvatar()));
         User savedUser = this.userRepository.save(user);
         RegisterResponseDTO registerResponseDTO = modelMapper.map(savedUser, RegisterResponseDTO.class);
         String token = this.jwtService.generateToken(registerResponseDTO.getEmail());
