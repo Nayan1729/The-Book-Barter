@@ -1,11 +1,22 @@
 export default function getUserLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition( position => {
-            let lat = position.coords.latitude;
-            let lon = position.coords.longitude;
-            console.log(lat , lon); 
-        });
-    } else {
-        console.log("Geolocation is not supported by this browser.");
-    }
-}
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by your browser"));
+        return;
+      }
+  
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          reject(error);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    });
+  }
+  
