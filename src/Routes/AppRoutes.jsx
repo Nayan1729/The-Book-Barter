@@ -6,6 +6,7 @@ import React from 'react'
 import SignUpForm from "../pages/SignUpForm";
 import HomePage from "../pages/HomePage";
 import ListBookPage from "../pages/ListBookPage";
+import BookDetailsPage from "../pages/BookDetailsPage";
 
 const AppRoutes = () => {
     return (
@@ -14,6 +15,8 @@ const AppRoutes = () => {
             <Route path="/signup" element={<SignUpForm />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/list-book" element={<ListBookPage />} />
+            <Route path="/books/:bookId" element={<BookDetailsPage />} />
+            
         </Routes>
     )
 }

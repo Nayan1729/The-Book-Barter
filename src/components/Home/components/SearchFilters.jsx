@@ -14,11 +14,8 @@ export function SearchFilters({
   setFilterType,
   filterQuery,
   setFilterQuery,
-  onSearch,
 }) {
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") onSearch();
-  };
+
 
   return (
     <div className="space-y-4">
@@ -39,14 +36,10 @@ export function SearchFilters({
             placeholder={`Search by ${filterType}...`}
             value={filterQuery}
             onChange={(e) => setFilterQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
             className="pl-10 border-amber-200 focus:border-amber-500"
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         </div>
-        <Button onClick={onSearch} className="bg-amber-800 hover:bg-amber-900 text-white">
-          Search
-        </Button>
       </div>
     </div>
   );

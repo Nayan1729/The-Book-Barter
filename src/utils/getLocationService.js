@@ -3,10 +3,13 @@ export default function getUserLocation() {
       if (!navigator.geolocation) {
         reject(new Error("Geolocation is not supported by your browser"));
         return;
-      }
+      }   
   
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          
+          console.log(position.coords);
+          
           resolve({
             lat: position.coords.latitude,
             lng: position.coords.longitude,

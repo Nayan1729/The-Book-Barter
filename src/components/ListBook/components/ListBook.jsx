@@ -19,14 +19,16 @@ import {
 } from "../../Card";
 import { toast } from "react-toastify";
 import getUserLocation from "../../../utils/getLocationService";
-import { MapPin, ArrowLeft, Upload } from "lucide-react";
+import {  MapPin, ArrowLeft, Upload, X, Plus, ImageIcon } from "lucide-react"
 import { validationSchema } from "../schemas/ListBookSchema";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function ListBookForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(true);
-  const [bookCover, setBookCover] = useState(null);
+  const [imageUploads, setImageUploads] = useState([])
+  const [mainImageIndex, setMainImageIndex] = useState(0)
 
   // Initialize formik with initialValues and onSubmit
   const formik = useFormik({
@@ -50,17 +52,10 @@ export default function ListBookForm() {
       try {
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1500));
-        toast({
-          title: "Success!",
-          description: "Your book has been listed successfully.",
-        });
+        toast.success("Book Listed Successfully");
         navigate("/");
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to list your book. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to list your book. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -94,16 +89,47 @@ export default function ListBookForm() {
   }, [toast]);
 
   // Handle file input separately
+
   const handleFileChange = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const newImages = []
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader()
       reader.onload = (e) => {
-        setBookCover(e.target?.result);
-      };
-      reader.readAsDataURL(file);
+        const id = Math.random().toString(36).substring(2, 9)
+        newImages.push({
+          id,
+          file,
+          url: e.target?.result,
+        })
+        // Update state once all files are processed
+        if (newImages.length === files.length) {
+          setImageUploads((prev) => [...prev, ...newImages])
+        }
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+  const removeImage = (id) => {
+    setImageUploads((prev) => {
+      const filtered = prev.filter((img) => img.id !== id)
+
+      // If we're removing the main image, reset the main image index
+      if (mainImageIndex >= filtered.length && filtered.length > 0) {
+        setMainImageIndex(0)
+      }
+
+      return filtered
     }
-  };
+  )}
+
+  
+  const setAsMainImage = (index) => {
+    setMainImageIndex(index)
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12">
@@ -260,36 +286,90 @@ export default function ListBookForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Book Cover</Label>
-                    <div className="border-2 border-dashed border-amber-200 rounded-lg p-4 text-center hover:bg-amber-50 transition-colors cursor-pointer">
+                    <Label className="mb-2 block">Book Images *</Label>
+                    <div className="border-2 border-dashed border-amber-200 rounded-lg p-4 text-center hover:bg-amber-50 transition-colors">
                       <input
                         type="file"
                         id="coverImage"
                         accept="image/*"
+                        multiple
                         className="hidden"
                         onChange={handleFileChange}
                       />
-                      <label htmlFor="coverImage" className="cursor-pointer block">
-                        {bookCover ? (
-                          <div className="flex flex-col items-center">
-                            <img
-                              src={bookCover || "/placeholder.svg"}
-                              alt="Book cover preview"
-                              className="max-h-40 max-w-full mb-2 rounded"
-                            />
-                            <span className="text-sm text-amber-700">
-                              Click to change
-                            </span>
+
+                      {imageUploads.length > 0 ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            <AnimatePresence>
+                              {imageUploads.map((image, index) => (
+                                <motion.div
+                                  key={image.id}
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.8 }}
+                                  className={`relative rounded-md overflow-hidden border-2 ${index === mainImageIndex ? "border-amber-600 ring-2 ring-amber-400" : "border-gray-200"}`}
+                                >
+                                  <img
+                                    src={image.url || "/placeholder.svg"}
+                                    alt={`Book image ${index + 1}`}
+                                    className="w-full h-24 object-cover"
+                                  />
+                                  <div className="absolute top-0 right-0 p-1 flex gap-1">
+                                    {index !== mainImageIndex && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setAsMainImage(index)}
+                                        className="bg-amber-800 text-white rounded-full p-1 hover:bg-amber-700 transition-colors"
+                                        title="Set as main image"
+                                      >
+                                        <ImageIcon className="h-3 w-3" />
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeImage(image.id)}
+                                      className="bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition-colors"
+                                      title="Remove image"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  {index === mainImageIndex && (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-amber-800 text-white text-xs py-1 text-center">
+                                      Main Image
+                                    </div>
+                                  )}
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+
+                            <label
+                              htmlFor="coverImage"
+                              className="border-2 border-dashed border-amber-200 rounded-md flex items-center justify-center h-24 cursor-pointer hover:bg-amber-50 transition-colors"
+                            >
+                              <Plus className="h-6 w-6 text-amber-700" />
+                            </label>
                           </div>
-                        ) : (
+
+                          <p className="text-sm text-amber-700">
+                            {imageUploads.length} {imageUploads.length === 1 ? "image" : "images"} selected. Click{" "}
+                            <span className="font-medium">+</span> to add more.
+                          </p>
+                        </div>
+                      ) : (
+                        <label htmlFor="coverImage" className="cursor-pointer block py-6">
                           <div className="flex flex-col items-center text-amber-700">
                             <Upload className="h-10 w-10 mb-2" />
-                            <span>Upload book cover image</span>
+                            <span className="font-medium">Upload book images</span>
+                            <p className="text-sm text-amber-600 mt-1">
+                              Select multiple images to show your book from different angles
+                            </p>
                           </div>
-                        )}
-                      </label>
+                        </label>
+                      )}
                     </div>
                   </div>
+
 
                   <div className="space-y-2 mt-4">
                     <Label className="flex items-center">Location</Label>

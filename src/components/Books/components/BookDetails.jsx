@@ -5,7 +5,6 @@ import { Card, CardContent } from "../../Card";
 import { toast } from "react-toastify";
 import { ArrowLeft, MapPin, BookOpen, User, Building, Calendar, Languages, Tag, Info } from "lucide-react";
 import { Link } from "react-router-dom";
-import { dummyBooks, userBooks } from "../../../utils/DummyBooks";
 import {
   Dialog,
   DialogContent,
@@ -15,66 +14,50 @@ import {
   DialogTrigger,
 } from "../../../components/Dailog";
 import { motion } from "framer-motion";
+import axios from "axios";
+import { getBookDetailsApi } from "../../../apiEndPoints";
 
-export default function BookDetailsPage() {
-  const params = useParams();
+export default function BookDetailsComponent() {
+  const {bookId} = useParams();
   const navigate = useNavigate();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
   const [selectedBookForTrade, setSelectedBookForTrade] = useState(null);
 
+  
   useEffect(() => {
     const fetchBook = async () => {
+      
       setLoading(true);
-      try {
-        // In a real app, this would be an API call to your backend.
-        // Example: const response = await fetch(`/api/books/${params.id}`);
-        // For demo, we'll use dummy data:
-        setTimeout(() => {
-          const foundBook = dummyBooks.find((b) => b.id === params.id);
-          if (foundBook) {
-            setBook(foundBook);
-          }
-          setLoading(false);
-        }, 1000);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch book details. Please try again later.",
-          variant: "destructive",
-        });
-        setLoading(false);
+      const res = await getBookDetailsApi(bookId)
+      if(res.statusCode == 200){
+        setBook(res.data)
+      }else{
+        toast.error(res.message)
       }
+      setLoading(false);
     };
 
-    if (params.id) {
+    if (bookId) {
       fetchBook();
     }
-  }, [params.id, toast]);
+  }, []);
 
   const handleTradeRequest = () => {
     if (!selectedBookForTrade) {
-      toast({
-        title: "Selection Required",
-        description: "Please select one of your books to trade.",
-        variant: "destructive",
-      });
+      toast.error("Book not found")
       return;
     }
 
-    // Simulate sending the trade request
-    toast({
-      title: "Trade Request Sent",
-      description: "Your trade request has been sent to the book owner. They will contact you soon.",
-    });
+    toast.success( "Trade Request Sent");
 
     setTradeDialogOpen(false);
     setSelectedBookForTrade(null);
 
-    // Redirect to profile page after a short delay
+
     setTimeout(() => {
-      router.push("/profile?tab=pending");
+      navigate("/profile?tab=pending");
     }, 1500);
   };
 
@@ -89,7 +72,8 @@ export default function BookDetailsPage() {
       </div>
     );
   }
-
+  console.log(loading);
+  
   if (!book) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex justify-center items-center">
@@ -98,7 +82,7 @@ export default function BookDetailsPage() {
           <p className="text-gray-600 mb-6">
             The book you're looking for doesn't exist or has been removed.
           </p>
-          <Link href="/">
+          <Link to="/">
             <Button className="bg-amber-800 hover:bg-amber-900 text-white">
               Return to Home
             </Button>
@@ -112,7 +96,7 @@ export default function BookDetailsPage() {
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12">
       <div className="container mx-auto px-4">
         <Link
-          href="/"
+          to="/"
           className="inline-flex items-center text-amber-800 hover:text-amber-600 mb-6 transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -129,7 +113,7 @@ export default function BookDetailsPage() {
                 </div>
                 <div className="p-6 flex justify-center">
                   <motion.img
-                    src={book.coverImage || "/placeholder.svg"}
+                    src={book.imageUrls && book.imageUrls[0] || "/placeholder.svg"}
                     alt={book.title}
                     className="max-w-full h-auto rounded shadow-md"
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -146,7 +130,7 @@ export default function BookDetailsPage() {
                         disabled={book.status !== "Available"}
                         onClick={() => setTradeDialogOpen(true)}
                       >
-                        {book.status === "Available" ? "Trade This Book" : "Currently Unavailable"}
+                        {book.status === "LISTED" ? "Trade This Book" : "Currently Unavailable"}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[600px]">
@@ -159,7 +143,7 @@ export default function BookDetailsPage() {
                         </DialogDescription>
                       </DialogHeader>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 max-h-[400px] overflow-y-auto p-2">
+                      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 max-h-[400px] overflow-y-auto p-2">
                         {userBooks.map((userBook) => (
                           <motion.div
                             key={userBook.id}
@@ -172,7 +156,7 @@ export default function BookDetailsPage() {
                           >
                             <div className="aspect-[2/3] relative">
                               <img
-                                src={userBook.coverImage || "/placeholder.svg"}
+                                src={userBook.imageUrls && userBook.imageUrls[0] || "/placeholder.svg"}
                                 alt={userBook.title}
                                 className="w-full h-full object-cover"
                               />
@@ -204,7 +188,7 @@ export default function BookDetailsPage() {
                             </div>
                           </motion.div>
                         ))}
-                      </div>
+                      </div> */}
 
                       <div className="flex justify-end space-x-4 mt-4">
                         <Button
@@ -250,7 +234,7 @@ export default function BookDetailsPage() {
                     <Calendar className="h-4 w-4 mr-2 mt-1 text-amber-600" />
                     <div>
                       <p className="text-sm text-gray-500">Listed Date</p>
-                      <p>{new Date(book.listedDate || "").toLocaleDateString()}</p>
+                      <p>{new Date(book.listedDateTime   || "").toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="flex items-start">
@@ -271,14 +255,14 @@ export default function BookDetailsPage() {
                     <Info className="h-4 w-4 mr-2 mt-1 text-amber-600" />
                     <div>
                       <p className="text-sm text-gray-500">Condition</p>
-                      <p>{book.condition}</p>
+                      <p>{book.bookcondition}</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <MapPin className="h-4 w-4 mr-2 mt-1 text-amber-600" />
                     <div>
                       <p className="text-sm text-gray-500">Location</p>
-                      <p>{book.location.address}</p>
+                      <p>{book.location}</p>
                     </div>
                   </div>
                 </div>
@@ -292,9 +276,9 @@ export default function BookDetailsPage() {
                 <div className="border-t border-amber-100 pt-4">
                   <h2 className="text-xl font-medium text-amber-800 mb-2">Location</h2>
                   <div className="bg-amber-50 rounded-lg p-4 text-center">
-                    <p className="text-amber-800">This book is available at {book.location.address}</p>
+                    <p className="text-amber-800">This book is available at {book.location}</p>
                     <p className="text-sm text-gray-500">
-                      Coordinates: {book.location.lat.toFixed(6)}, {book.location.lng.toFixed(6)}
+                      Coordinates: {book.latitude.toFixed(6)}, {book.longitude.toFixed(6)}
                     </p>
                   </div>
                 </div>

@@ -7,11 +7,11 @@ import { toast } from "react-toastify";
 import getUserLocation from "../../utils/getLocationService";
 import { Link } from "react-router-dom";
 import { dummyBooks } from "../../utils/DummyBooks";
+import { findNearByBooksApi } from "../../apiEndPoints";
 
 export default function Home() {
   const [books, setBooks] = useState([]);
-  const [filteredBooks, setFilteredBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [searchRadius, setSearchRadius] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,65 +20,46 @@ export default function Home() {
   const [filterQuery, setFilterQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
 
-  const booksPerPage = 8;
 
   useEffect(() => {
     const fetchUserLocation = async () => {
       try {
         const location = await getUserLocation();
         setUserLocation(location);
-        fetchBooks(location, searchRadius);
+        await findBooks();
       } catch {
-        toast({
-          title: "Location Error",
-          description: "Unable to get your location. Please enter it manually.",
-          variant: "destructive",
-        });
+        toast.error("Unable to get your location. Please enter it manually.");
         setLoading(false);
-        fetchBooks(null, searchRadius);
       }
     };
     fetchUserLocation();
-  }, [searchRadius, toast]);
-
-  const fetchBooks = (location, radius) => {
-    setLoading(true);
-    setTimeout(() => {
-      let booksToShow = [...dummyBooks];
-
-      setBooks(booksToShow);
-      setFilteredBooks(booksToShow);
-      setTotalPages(Math.ceil(booksToShow.length / booksPerPage));
-      setLoading(false);
-    }, 1000);
-  };
+  }, []);
 
 
-  const deg2rad = (deg) => deg * (Math.PI / 180);
 
-  const handleSearch = () => {
-    let results = books.filter((book) =>
-      book[filterType]?.toLowerCase().includes(filterQuery.toLowerCase())
-    );
-    if (locationQuery) {
-      results = results.filter((book) => book.location.address.toLowerCase().includes(locationQuery.toLowerCase()));
+
+  const findBooks = async() => {
+    // locationQuery  , userLocation , searchRadius , filterType , filterQuery , page...
+    setLoading(true)
+    const res = await findNearByBooksApi({location: locationQuery  , lat : userLocation?.lat , lng : userLocation?.lng , radius :searchRadius , filterType , filterQuery })
+    console.log(res);
+    
+    if(res.statusCode == 200){
+      setBooks(res.data.booksListedDTOS)
+    }else{
+      toast.error(res.message) 
     }
-    setFilteredBooks(results);
-    setTotalPages(Math.ceil(results.length / booksPerPage));
-    setCurrentPage(1);
+    setLoading(false)
   };
 
   const handleRadiusChange = (newRadius) => {
     setSearchRadius(newRadius);
-    if (userLocation) fetchBooks(userLocation, newRadius);
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  const currentBooks = filteredBooks.slice((currentPage - 1) * booksPerPage, currentPage * booksPerPage);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
@@ -93,10 +74,10 @@ export default function Home() {
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8 transition-all duration-300 hover:shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div><h2 className="text-xl font-medium text-amber-800 mb-4">Find Books</h2>
-              <SearchFilters {...{ filterType, setFilterType, filterQuery, setFilterQuery, onSearch: handleSearch }} />
+              <SearchFilters {...{ filterType, setFilterType, filterQuery, setFilterQuery }} />
             </div>
             <div><h2 className="text-xl font-medium text-amber-800 mb-4">Location</h2>
-              <LocationSearch {...{ locationQuery, setLocationQuery, searchRadius, setSearchRadius: handleRadiusChange, onSearch: handleSearch, userLocation }} />
+              <LocationSearch {...{ locationQuery, setLocationQuery, searchRadius, setSearchRadius: handleRadiusChange, onSearch: findBooks, userLocation }} />
             </div>
           </div>
         </div>
@@ -107,10 +88,10 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* <h2 className="text-2xl font-medium text-amber-800 mb-6">
+            <h2 className="text-2xl font-medium text-amber-800 mb-6">
               {locationQuery ? `Books near "${locationQuery}"` : userLocation ? `Books within ${searchRadius}km` : "All Available Books"}
-            </h2>*/
-            <BookList {...{ books, currentPage, totalPages, onPageChange: handlePageChange }} /> }
+            </h2>
+            <BookList {...{ books, currentPage, totalPages, onPageChange: handlePageChange }} /> 
           </>
         )}
       </div>
