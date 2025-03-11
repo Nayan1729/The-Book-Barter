@@ -1,23 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 
-const Slider = () => {
-  const [radius, setRadius] = useState(10); // Default radius value
-
+const Slider = ({ value, onChange, min = 1, max = 50, step = 1, className }) => {
   return (
-    <div className="p-4">
-      <label className="block text-gray-700 font-medium mb-2">
-        Search Radius: {radius} km
-      </label>
-      <input
-        type="range"
-        min="1"
-        max="50"
-        step="1"
-        value={radius}
-        onChange={(e) => setRadius(e.target.value)}
-        className="w-full accent-[#914C1E]"
-      />
-    </div>
+    <SliderPrimitive.Root
+      className={`relative flex w-full items-center ${className}`}
+      value={[value]}
+      onValueChange={(val) => onChange(val[0])}
+      min={min}
+      max={max}
+      step={step}
+    >
+      <SliderPrimitive.Track className="relative h-2 w-full rounded-full bg-gray-300">
+        <SliderPrimitive.Range className="absolute h-full bg-amber-700" />
+      </SliderPrimitive.Track>
+      <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-amber-700 bg-white transition focus:ring-2 focus:ring-amber-800" />
+    </SliderPrimitive.Root>
   );
 };
 

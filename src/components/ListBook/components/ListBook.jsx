@@ -22,6 +22,7 @@ import getUserLocation from "../../../utils/getLocationService";
 import {  MapPin, ArrowLeft, Upload, X, Plus, ImageIcon } from "lucide-react"
 import { validationSchema } from "../schemas/ListBookSchema";
 import { AnimatePresence, motion } from "framer-motion";
+import { listBookApi } from "../../../apiEndPoints";
 
 export default function ListBookForm() {
   const navigate = useNavigate();
@@ -29,15 +30,32 @@ export default function ListBookForm() {
   const [locationLoading, setLocationLoading] = useState(true);
   const [imageUploads, setImageUploads] = useState([])
   const [mainImageIndex, setMainImageIndex] = useState(0)
+  const [isUsingCurrentLocation , setIsUsingCurrentLocation] = useState(true)
+  const [currentLocation , setCurrentLocation] = useState(null)
+  const [imageError, setImageError] = useState("");
 
   // Initialize formik with initialValues and onSubmit
+  const validateImages = (images) => {
+    if (images.length < 2) {
+      setImageError("Please upload at least 2 images.");
+      return false;
+    }
+    const totalSize = images.reduce((acc, img) => acc + img.file.size, 0);
+    if (totalSize > 5 * 1024 * 1024) { // 5MB
+      setImageError("Total image size should be less than 5MB.");
+      return false;
+    }
+    setImageError("");
+    return true;
+  };
+
   const formik = useFormik({
     initialValues: {
       title: "",
       author: "",
       publisher: "",
       description: "",
-      condition: "Good",
+      bookcondition: "Good",
       genre: "Fiction",
       language: "English",
       location: {
@@ -48,17 +66,20 @@ export default function ListBookForm() {
     },
     validationSchema : validationSchema,
     onSubmit: async (values) => {
+      if (!validateImages(imageUploads)){
+        return;
+      } 
+      console.log("imageUploads",imageUploads);
       setLoading(true);
-      try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        toast.success("Book Listed Successfully");
-        navigate("/");
-      } catch (error) {
-        toast.error("Failed to list your book. Please try again.");
-      } finally {
-        setLoading(false);
-      }
+        console.log("List book called");
+        const res = await listBookApi(values,imageUploads);
+        if(res.statusCode == 201){
+          toast.success("Book Listed Successfully");
+          navigate("/");
+        }else{
+          toast.error("Failed to list your book. Please try again.");
+        }
+        setLoading(false)
     },
   });
 
@@ -73,46 +94,56 @@ export default function ListBookForm() {
           lng: location.lng,
           address: "",
         });
+        setCurrentLocation(location)        
       } catch (error) {
-        toast({
-          title: "Location Error",
-          description: "Unable to get your location. Please enter it manually.",
-          variant: "destructive",
-        });
+        toast.error("Unable to get your location. Please enter it manually.");
       } finally {
         setLocationLoading(false);
       }
     };
-
     fetchLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  },[]);
+
+  useEffect(()=>{
+    !isUsingCurrentLocation
+                              ? (
+                                  formik.setFieldValue("location.address", ""),
+                                  formik.setFieldValue("location.lat", 0),
+                                  formik.setFieldValue("location.lng", 0)
+                                )
+                              : (
+                                  formik.setFieldValue("location.lat", currentLocation?.lat),
+                                  formik.setFieldValue("location.lng", currentLocation?.lng),
+                                  formik.setFieldValue("location.address","")
+                                );
+  },[isUsingCurrentLocation])
 
   // Handle file input separately
 
   const handleFileChange = (e) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    const newImages = []
-
+    const newImages = [];
     Array.from(files).forEach((file) => {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        const id = Math.random().toString(36).substring(2, 9)
+        const id = Math.random().toString(36).substring(2, 9);
         newImages.push({
           id,
           file,
           url: e.target?.result,
-        })
-        // Update state once all files are processed
+        });
         if (newImages.length === files.length) {
-          setImageUploads((prev) => [...prev, ...newImages])
+          const updatedImages = [...imageUploads, ...newImages];
+          if (validateImages(updatedImages)) {
+            setImageUploads(updatedImages);
+          }
         }
-      }
-      reader.readAsDataURL(file)
-    })
-  }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
   const removeImage = (id) => {
     setImageUploads((prev) => {
       const filtered = prev.filter((img) => img.id !== id)
@@ -131,6 +162,9 @@ export default function ListBookForm() {
     setMainImageIndex(index)
   }
 
+  if(loading){
+    return <Loader />
+  }
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12">
       <div className="container mx-auto px-4">
@@ -160,7 +194,6 @@ export default function ListBookForm() {
                     <Input
                       id="title"
                       name="title"
-                      required
                       className="border-amber-200 focus:border-amber-500"
                       {...formik.getFieldProps("title")}
                       error={formik.errors.title}
@@ -173,7 +206,6 @@ export default function ListBookForm() {
                     <Input
                       id="author"
                       name="author"
-                      required
                       className="border-amber-200 focus:border-amber-500"
                       {...formik.getFieldProps("author")}
                       error={formik.errors.author}
@@ -194,16 +226,16 @@ export default function ListBookForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="condition">Condition *</Label>
+                    <Label htmlFor="bookcondition">Book Condition *</Label>
                     <Select
-                      name="condition"
-                      value={formik.values.condition}
+                      name="bookcondition"
+                      value={formik.values.bookcondition}
                       onValueChange={(value) =>
-                        formik.setFieldValue("condition", value)
+                        formik.setFieldValue("bookcondition", value)
                       }
                     >
                       <SelectTrigger className="border-amber-200 focus:border-amber-500">
-                        <SelectValue placeholder="Select condition" />
+                        <SelectValue placeholder="Select Book condition" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="New">New</SelectItem>
@@ -238,6 +270,7 @@ export default function ListBookForm() {
                         <SelectItem value="Romance">Romance</SelectItem>
                         <SelectItem value="Biography">Biography</SelectItem>
                         <SelectItem value="History">History</SelectItem>
+                        <SelectItem value="Finance">Finance</SelectItem>
                         <SelectItem value="Self-Help">Self-Help</SelectItem>
                         <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
@@ -367,17 +400,15 @@ export default function ListBookForm() {
                           </div>
                         </label>
                       )}
+                                          { imageError && <p className="text-red-500">{imageError}</p> }
                     </div>
                   </div>
-
-
-                  <div className="space-y-2 mt-4">
+                  <div className="space-y-2 mt-4"> 
                     <Label className="flex items-center">Location</Label>
 
                     {locationLoading ? (
                       <div className="flex items-center text-amber-700">
-                        <Loader className="h-4 w-4 animate-spin mr-2" />
-                        <span>Detecting your location...</span>
+                        <Loader text = "Detecting your location..." className="h-4 w-4 animate-spin mr-2" />
                       </div>
                     ) : (
                       <div className="relative">
@@ -386,28 +417,33 @@ export default function ListBookForm() {
                           placeholder="Enter location..."
                           className="pl-10 pr-28 border-amber-200 focus:border-amber-500"
                           value={formik.values.location.address}
-                          onChange={(e) =>
+                          onChange={(e) =>{
                             formik.setFieldValue("location.address", e.target.value)
+                            setIsUsingCurrentLocation(false)
+                            formik.setFieldValue("location.lat","")
+                            formik.setFieldValue("location.lng","")  
+                            }
                           }
                           error={formik.errors.location?.address}
                           touched={formik.touched.location?.address}
                         />
                         {/* MapPin icon */}
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        {/* 'Using your location' Button */}
-                        <button
+                        {
+                          <>
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          {/* 'Using your location' Button */}
+                        <Button
                           type="button"
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-700 hover:text-amber-900 hover:bg-amber-50 text-sm px-2 py-1 rounded"
                           onClick={() => {
-                            // For demonstration, you could reset or re-fetch location
-                            formik.setFieldValue(
-                              "location.address",
-                              "Using your location"
-                            );
+                            setIsUsingCurrentLocation((prev)=>!prev)
+                            
                           }}
                         >
-                          Using your location
-                        </button>
+                          {isUsingCurrentLocation ? "Using your Location" : "Use your location"}
+                          </Button>
+                          </>
+                        }
                       </div>
                     )}
                   </div>
@@ -427,9 +463,7 @@ export default function ListBookForm() {
                 <Button
                   type="submit"
                   className="bg-amber-800 hover:bg-amber-900 text-white"
-                  disabled={loading}
                 >
-                  {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                   List Book
                 </Button>
               </CardFooter>

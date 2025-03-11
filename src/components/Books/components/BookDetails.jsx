@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate , useParams } from "react-router-dom";
+import {  useParams } from "react-router-dom";
 import { Button , Badge } from "../../index";
 import { Card, CardContent } from "../../Card";
 import { toast } from "react-toastify";
@@ -12,18 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../../components/Dailog";
+} from "../../../components/Dialog";
 import { motion } from "framer-motion";
-import axios from "axios";
-import { getBookDetailsApi } from "../../../apiEndPoints";
+import { getBookDetailsApi, getUserBooksApi, handleTradeRequestApi } from "../../../apiEndPoints";
 
 export default function BookDetailsComponent() {
   const {bookId} = useParams();
-  const navigate = useNavigate();
   const [book, setBook] = useState(null);
+  const [userBooks , setUserBooks] = useState(null)
   const [loading, setLoading] = useState(true);
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
-  const [selectedBookForTrade, setSelectedBookForTrade] = useState(null);
+  const [selectedBookForTrade, setSelectedBookForTrade] = useState(null); // Id
 
   
   useEffect(() => {
@@ -44,21 +43,28 @@ export default function BookDetailsComponent() {
     }
   }, []);
 
-  const handleTradeRequest = () => {
-    if (!selectedBookForTrade) {
-      toast.error("Book not found")
-      return;
+  const handleClick = async()=>{
+    setTradeDialogOpen(true)
+    setLoading(true);
+    const res = await getUserBooksApi();
+    if(res.statusCode == 200){
+      setUserBooks(res.data) 
+    }else{
+      toast.error(res.message)
     }
-
-    toast.success( "Trade Request Sent");
-
-    setTradeDialogOpen(false);
-    setSelectedBookForTrade(null);
+    setLoading(false)
+  }
 
 
-    setTimeout(() => {
-      navigate("/profile?tab=pending");
-    }, 1500);
+  const handleTradeRequest = async() => {
+     const res = await handleTradeRequestApi(bookId , selectedBookForTrade)
+     if(res.statusCode == 201 ){
+        toast.success(res.message)
+        setTradeDialogOpen(false)
+     }else{
+      toast.error(res.message)  
+     }
+
   };
 
   if (loading) {
@@ -126,9 +132,9 @@ export default function BookDetailsComponent() {
                   <Dialog open={tradeDialogOpen} onOpenChange={setTradeDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
-                        className="w-full bg-amber-800 hover:bg-amber-900 text-white"
-                        disabled={book.status !== "Available"}
-                        onClick={() => setTradeDialogOpen(true)}
+                        className="w-full bg-amber-800 hover:bg-amber-900 text-white cursor-pointer"
+                        disabled={book.status !== "LISTED"}
+                        onClick={() => handleClick()}
                       >
                         {book.status === "LISTED" ? "Trade This Book" : "Currently Unavailable"}
                       </Button>
@@ -142,65 +148,70 @@ export default function BookDetailsComponent() {
                           Select one of your books to trade for "{book.title}" by {book.author}.
                         </DialogDescription>
                       </DialogHeader>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 max-h-[400px] overflow-y-auto p-2">
+                      {userBooks?.map((userBook) => (
+                        <motion.div
+                        key={userBook.id}
+                        whileHover={{ scale: 1.03 }}
+                        onClick={() => setSelectedBookForTrade(userBook.id)}
+                        className={`
+                          relative rounded-lg border-2 cursor-pointer flex flex-col
+                          ${selectedBookForTrade === userBook.id ? "border-amber-600" : "border-transparent"}
+                        `}
+                      >
+                        {/* Image Container */}
+                        <div className="aspect-[2/3] relative overflow-hidden">
+                          <img
+                            src={userBook.imageUrls && userBook.imageUrls[0] || "/placeholder.svg"}
+                            alt={userBook.title}
+                            className="w-full h-full object-cover"
+                          />
+                          {selectedBookForTrade === userBook.id && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-white rounded-full p-2">
+                                <svg
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M20 6L9 17L4 12"
+                                    stroke="#92400e"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        {/* Text Container */}
+                        <div className="p-2 text-black">
+                          <h3 className="font-medium text-sm truncate">{userBook.title}</h3>
+                          <p className="text-xs text-black truncate">by {userBook.author}</p>
+                        </div>
+                      </motion.div>
+                      
+                      
+                      ))}
+                    </div>`
 
-                      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 max-h-[400px] overflow-y-auto p-2">
-                        {userBooks.map((userBook) => (
-                          <motion.div
-                            key={userBook.id}
-                            whileHover={{ scale: 1.03 }}
-                            className={`
-                              relative rounded-lg overflow-hidden border-2 cursor-pointer
-                              ${selectedBookForTrade === userBook.id ? "border-amber-600" : "border-transparent"}
-                            `}
-                            onClick={() => setSelectedBookForTrade(userBook.id)}
-                          >
-                            <div className="aspect-[2/3] relative">
-                              <img
-                                src={userBook.imageUrls && userBook.imageUrls[0] || "/placeholder.svg"}
-                                alt={userBook.title}
-                                className="w-full h-full object-cover"
-                              />
-                              {selectedBookForTrade === userBook.id && (
-                                <div className="absolute inset-0 bg-amber-800 bg-opacity-30 flex items-center justify-center">
-                                  <div className="bg-white rounded-full p-2">
-                                    <svg
-                                      width="24"
-                                      height="24"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                      <path
-                                        d="M20 6L9 17L4 12"
-                                        stroke="#92400e"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      />
-                                    </svg>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-2 bg-white">
-                              <h3 className="font-medium text-sm truncate">{userBook.title}</h3>
-                              <p className="text-xs text-gray-600 truncate">by {userBook.author}</p>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div> */}
 
                       <div className="flex justify-end space-x-4 mt-4">
                         <Button
                           variant="outline"
                           onClick={() => setTradeDialogOpen(false)}
-                          className="border-amber-800 text-amber-800"
+                          className="border-amber-800 text-amber-800 cursor-pointer"
                         >
                           Cancel
                         </Button>
                         <Button
                           onClick={handleTradeRequest}
-                          className="bg-amber-800 hover:bg-amber-900 text-white"
+                          className="bg-amber-800 hover:bg-amber-900 text-white cursor-pointer"
                           disabled={!selectedBookForTrade}
                         >
                           Request Trade

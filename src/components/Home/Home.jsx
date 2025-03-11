@@ -6,7 +6,6 @@ import { Button , Loader} from "../index";
 import { toast } from "react-toastify";
 import getUserLocation from "../../utils/getLocationService";
 import { Link } from "react-router-dom";
-import { dummyBooks } from "../../utils/DummyBooks";
 import { findNearByBooksApi } from "../../apiEndPoints";
 
 export default function Home() {
@@ -26,7 +25,7 @@ export default function Home() {
       try {
         const location = await getUserLocation();
         setUserLocation(location);
-        await findBooks();
+        console.log(location);
       } catch {
         toast.error("Unable to get your location. Please enter it manually.");
         setLoading(false);
@@ -34,6 +33,13 @@ export default function Home() {
     };
     fetchUserLocation();
   }, []);
+
+  useEffect(()=>{
+    const fetchBooks = async ()=>{
+      await findBooks();
+    }
+    fetchBooks()
+  },[userLocation])
 
 
 
@@ -54,12 +60,14 @@ export default function Home() {
 
   const handleRadiusChange = (newRadius) => {
     setSearchRadius(newRadius);
+    console.log(newRadius);
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  if(loading)return < Loader />
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
@@ -67,8 +75,8 @@ export default function Home() {
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <h1 className="text-4xl font-serif font-bold text-amber-900 mb-4 md:mb-0">The Book Barter</h1>
           <div className="flex space-x-4">
-            <Link to="/login"><Button variant="outline" className="border-amber-800 text-amber-800">Login</Button></Link>
-            <Link to="/list-book"><Button className="bg-amber-800 hover:bg-amber-900 text-white">List a Book</Button></Link>
+            <Link to="/login"><Button variant="outline" className="border-amber-800 text-amber-800 cursor-pointer">Login</Button></Link>
+            <Link to="/list-book"><Button className="bg-amber-800 hover:bg-amber-900 text-white cursor-pointer">List a Book</Button></Link>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8 transition-all duration-300 hover:shadow-xl">

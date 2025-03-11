@@ -45,5 +45,10 @@ export const validationSchema = Yup.object().shape({
     lat: Yup.number().typeError("Latitude must be a number"),
     lng: Yup.number().typeError("Longitude must be a number"),
     address: Yup.string().nullable(),
-  }),
+  }).test(
+    "location-required",
+    "Either address or latitude & longitude must be provided",
+    (value) =>
+      !!value?.address || (value?.lat !== undefined && value?.lng !== undefined)
+  ),
 });

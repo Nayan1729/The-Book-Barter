@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { BookOpen } from "lucide-react";
 
-export default function Loader() {
+export default function Loader({text="Loading..."}) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-80 z-50">
       <motion.div
@@ -17,7 +17,7 @@ export default function Loader() {
         >
           <BookOpen className="h-16 w-16 text-amber-800" />
         </motion.div>
-        <p className="mt-4 text-amber-900 text-lg font-medium">Loading...</p>
+        <p className="mt-4 text-amber-900 text-lg font-medium">{text}</p>
       </motion.div>
     </div>
   );

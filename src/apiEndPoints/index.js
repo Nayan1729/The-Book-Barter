@@ -104,3 +104,48 @@ export const getBookDetailsApi = async(id)=>{
         return error.response.data
     }
 }
+
+export const getUserBooksApi = async()=>{
+    try {
+        const res = await myAxios.get(`/books/user-books`)
+        console.log(res.data);
+        return res.data        
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+export const handleTradeRequestApi = async( listedBookId , userListedBookId )=>{
+    try {
+        const res = await myAxios.post(`/trade-requests`,{bookListedId : listedBookId , bookTradedId : userListedBookId })
+        console.log(res.data);
+        return res.data;     
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+export const listBookApi = async(values,images)=>{
+    const formData = new FormData()
+    Object.keys(values).forEach((key)=>{
+        key != "location" && formData.append(key ,values[key]);
+    })
+    
+    for(let i=0;i<images.length;i++ ){
+        console.log(images[i].file);
+        formData.append("images",images[i].file)       
+    }
+    if(values.location.lat && values.location.lng ){
+        formData.append("latitude" , values.location.lat )
+        formData.append("longitude",values.location.lng)
+    }else{
+        formData.append("location",values.location.address)
+    }
+    try {
+        const res = await myAxios.post(`/books`,formData)
+        console.log(res.data);
+        return res.data;     
+    } catch (error) {
+        return error.response.data
+    }
+}
