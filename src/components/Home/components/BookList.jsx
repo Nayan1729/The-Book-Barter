@@ -2,7 +2,7 @@ import React from "react";
 import { BookCard } from "./BookCard";
 import { motion } from "framer-motion";
 
-export function BookList({ books, currentPage, totalPages, onPageChange }) {
+export function BookList({ books }) {
   const container = {
     hidden: { opacity: 0 },
     show: {

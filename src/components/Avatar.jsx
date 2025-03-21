@@ -19,7 +19,7 @@ const AvatarImage = React.forwardRef((props, ref) => {
   return (
     <AvatarPrimitive.Image
       ref={ref}
-      className={cn("aspect-square h-full w-full", className)}
+      className={cn("aspect-square   h-full w-full", className)}
       {...rest}
     />
   );

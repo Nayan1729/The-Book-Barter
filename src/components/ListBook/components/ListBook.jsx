@@ -36,8 +36,8 @@ export default function ListBookForm() {
 
   // Initialize formik with initialValues and onSubmit
   const validateImages = (images) => {
-    if (images.length < 2) {
-      setImageError("Please upload at least 2 images.");
+    if (images.length < 1) {
+      setImageError("Please upload an image");
       return false;
     }
     const totalSize = images.reduce((acc, img) => acc + img.file.size, 0);
@@ -66,6 +66,10 @@ export default function ListBookForm() {
     },
     validationSchema : validationSchema,
     onSubmit: async (values) => {
+      console.log(values);
+      console.log(imageUploads);
+      console.log(formik.errors);
+      
       if (!validateImages(imageUploads)){
         return;
       } 
@@ -117,11 +121,13 @@ export default function ListBookForm() {
                                   formik.setFieldValue("location.address","")
                                 );
   },[isUsingCurrentLocation])
-
+  console.log(formik.errors);
+  
   // Handle file input separately
 
   const handleFileChange = (e) => {
     const files = e.target.files;
+    console.log(files);
     if (!files || files.length === 0) return;
 
     const newImages = [];
@@ -134,6 +140,7 @@ export default function ListBookForm() {
           file,
           url: e.target?.result,
         });
+        console.log(newImages);
         if (newImages.length === files.length) {
           const updatedImages = [...imageUploads, ...newImages];
           if (validateImages(updatedImages)) {
@@ -141,6 +148,8 @@ export default function ListBookForm() {
           }
         }
       };
+      
+      
       reader.readAsDataURL(file);
     });
   };

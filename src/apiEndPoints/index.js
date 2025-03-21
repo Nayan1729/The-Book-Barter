@@ -72,10 +72,10 @@ export const findNearByBooksApi = async(values)=>{
             params.append('radius', values.radius.toString());
         }
         if (values.pageNo !== undefined && values.pageNo !== null) {
-            params.append('pageNo', values.pageNo.toString());
+            params.append('pageNo', parseInt(values.pageNo));
         }
         if (values.pageSize !== undefined && values.pageSize !== null) {
-            params.append('pageSize', values.pageSize.toString());
+            params.append('pageSize', values.pageSize);
         }
         if (values.sortBy !== undefined && values.sortBy !== null) {
             params.append('sortBy', values.sortBy);
@@ -83,6 +83,7 @@ export const findNearByBooksApi = async(values)=>{
         if (values.sortDir !== undefined && values.sortDir !== null) {
             params.append('sortDir', values.sortDir);
         }
+
 
         const query = params.toString();
         console.log("get books Api: ", values);
@@ -145,6 +146,57 @@ export const listBookApi = async(values,images)=>{
         const res = await myAxios.post(`/books`,formData)
         console.log(res.data);
         return res.data;     
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+export const userProfileApi = async(userId)=>{
+    try {
+        const res = await myAxios.get(`/users/${parseInt(userId)}`)
+        console.log(res.data);
+        return res.data;     
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+
+export const tradeDetailsApi = async(tradeId)=>{
+    try {
+        const res = await myAxios.get(`/trade-requests/${parseInt(tradeId)}`) 
+        console.log(res.data);
+        return res.data;     
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+export const acceptTradeApi = async(tradeId)=>{
+    try {
+        const res = await myAxios.get(`/trade-requests/${parseInt(tradeId)}/accept`) 
+        console.log(res.data);
+        return res.data;
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+export const declineTradeApi = async(tradeId)=>{
+    try {
+        const res = await myAxios.get(`/trade-requests/${parseInt(tradeId)}/reject`)
+        console.log(res.data);
+        return res.data;
+    } catch (error) {
+        return error.response.data
+    }
+}
+
+export const isAuthenticatedApi = async()=>{
+    try {
+        const res = await myAxios.get('/auth/isAuthenticated')
+        console.log(res.data)
+        return res.data
     } catch (error) {
         return error.response.data
     }

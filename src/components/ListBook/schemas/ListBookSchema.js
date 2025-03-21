@@ -29,10 +29,10 @@ export const validationSchema = Yup.object().shape({
   title: Yup.string().required("Title is required"),
   author: Yup.string().required("Author is required"),
   publisher: Yup.string(),
-  description: Yup.string()
+  description: Yup.string() 
     .required("Description is required")
     .min(10, "Description must be at least 10 characters"),
-  condition: Yup.string()
+    bookcondition: Yup.string()
     .required("Condition is required")
     .oneOf(validConditions, "Invalid condition"),
   genre: Yup.string()
@@ -45,10 +45,5 @@ export const validationSchema = Yup.object().shape({
     lat: Yup.number().typeError("Latitude must be a number"),
     lng: Yup.number().typeError("Longitude must be a number"),
     address: Yup.string().nullable(),
-  }).test(
-    "location-required",
-    "Either address or latitude & longitude must be provided",
-    (value) =>
-      !!value?.address || (value?.lat !== undefined && value?.lng !== undefined)
-  ),
+  })
 });
