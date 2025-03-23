@@ -42,7 +42,7 @@ Ensure you have the following installed:
 1. **Clone the repository**
    ```sh
    git clone https://github.com/Nayan1729/The-Book-Barter-Backend.git
-   cd the-book-barter
+   cd The-Book-Barter-Backend
    ```
 
 2. **Configure Secrets**
